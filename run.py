@@ -1,14 +1,34 @@
 #!/usr/bin/python3
-import random
+import random, sqlite3
+import os.path
+from os import path
 
 data = {}
 
 
-def create_account():
+def database(db_file):
+    try:
+        conn = sqlite3.connect(db_file)
+        cursor = conn.cursor()
+        cursor.execute("""CREATE TABLE IF NOT EXISTS card(
+                  id integer primary key,
+                  number text not null,
+                  pin text not null ,
+                  balance integer default 0
+                  )""")
+        return cursor, conn
+    except NameError:
+        print(NameError)
+
+
+def create_account(cursor, conn):
+    """
+    Create an account with:
+        card number generate with Luhna Alghoritm,
+        PIN number
+    :return:
+    """
     while True:
-        """
-            Generate card number with Luhn Algorithm 
-        """
         card_number = ""
         ai = ""
         for n in range(0, 9):
@@ -58,7 +78,8 @@ def create_account():
     balance = 0
 
     data.update({'card_number': elementary_card_number, 'pin_number': pin, 'balance': balance})
-
+    cursor.execute(f'INSERT INTO card(number, pin, balance) VALUES ("{elementary_card_number}", {pin}, {balance})')
+    conn.commit()
     print("Your card has been created")
 
     print("Your card number:")
@@ -88,10 +109,11 @@ def login(card_number: int, pin_number: int):
 
 
 if __name__ == "__main__":
+    cur, conn = database("card.sq3db")
     while True:
         option = int(input("1. Create an account\n2. Log into account\n3. Exit\n"))
         if option == 1:
-            create_account()
+            create_account(cur, conn)
         elif option == 2:
             login(int(input("Enter your card number:\n")), int(input("Enter your PIN:\n")))
         elif option == 3:
