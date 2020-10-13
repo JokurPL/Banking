@@ -63,7 +63,18 @@ def create_account(cursor, conn):
 
         sub = 60 - int(sum)
 
-        if len(card_number) == 15 and 10 > sub >= 0:
+        repeat = False
+        try:
+            test_card_number = str(elementary_card_number) + str(sub)
+            test_card_number = int(test_card_number)
+            cursor.execute("SELECT * FROM card")
+            for value in cursor.fetchall():
+                if test_card_number == value[2]:
+                    repeat = True
+        except ValueError:
+            continue
+
+        if len(card_number) == 15 and 10 > sub >= 0 and not repeat:
             break
 
     elementary_card_number += str(sub)
@@ -89,9 +100,16 @@ def create_account(cursor, conn):
     print(pin)
 
 
-def login(card_number: int, pin_number: int):
-    if card_number == int(data['card_number']) and pin_number == int(data['pin_number']):
-        print('You have successfully logged in!')
+def login(card_number: int, pin_number: int, cursor):
+    cursor.execute("SELECT * FROM card")
+    success = False
+    for value in cursor.fetchall():
+        if card_number == int(value[1]) and pin_number == int(value[2]):
+            print('You have successfully logged in!')
+            success = True
+        else:
+            success = False
+    if success:
         while True:
             print("1. Balance\n2. Log out\n0. Exit")
             option = int(input())
@@ -105,16 +123,16 @@ def login(card_number: int, pin_number: int):
                 print('Bye!')
                 return
     else:
-        print('Wrong card number or PIN!')
+        print("Wrong card number or PIN!")
 
 
 if __name__ == "__main__":
-    cur, conn = database("card.sq3db")
+    cur, conn = database("card.s3db")
     while True:
         option = int(input("1. Create an account\n2. Log into account\n3. Exit\n"))
         if option == 1:
             create_account(cur, conn)
         elif option == 2:
-            login(int(input("Enter your card number:\n")), int(input("Enter your PIN:\n")))
+            login(int(input("Enter your card number:\n")), int(input("Enter your PIN:\n")), cur)
         elif option == 3:
             break
