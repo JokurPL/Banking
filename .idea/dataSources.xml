@@ -13,5 +13,11 @@
       <jdbc-driver>org.sqlite.JDBC</jdbc-driver>
       <jdbc-url>jdbc:sqlite:C:\Users\Popoga\PycharmProjects\Banking\card.sq3db</jdbc-url>
     </data-source>
+    <data-source source="LOCAL" name="card [3]" uuid="077c7eff-f2e5-4296-bb45-3287959821a8">
+      <driver-ref>sqlite.xerial</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.sqlite.JDBC</jdbc-driver>
+      <jdbc-url>jdbc:sqlite:C:\Users\Popoga\PycharmProjects\Banking\card.s3db</jdbc-url>
+    </data-source>
   </component>
 </project>

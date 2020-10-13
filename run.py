@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-import random, sqlite3
+import random, sqlite3, sys
 import os.path
 from os import path
 
@@ -100,28 +100,59 @@ def create_account(cursor, conn):
     print(pin)
 
 
-def login(card_number: int, pin_number: int, cursor):
+def login(card_number: int, pin_number: int, cursor, conn):
     cursor.execute("SELECT * FROM card")
     success = False
     for value in cursor.fetchall():
         if card_number == int(value[1]) and pin_number == int(value[2]):
             print('You have successfully logged in!')
             success = True
-        else:
-            success = False
+            break
+
     if success:
         while True:
-            print("1. Balance\n2. Log out\n0. Exit")
-            option = int(input())
+            print("1. Balance\n2. Add income\n3. Do transfer\n4. Close account\n5. Log out\n0. Exit")
+            user_menu_option = int(input())
 
-            if option == 1:
-                print('Balance: %s' % data['balance'])
-            elif option == 2:
+            if user_menu_option == 1:
+                cursor.execute(f'SELECT balance FROM card WHERE number == {card_number}')
+                balance = cursor.fetchone()
+                print('Balance: %s' % balance)
+            elif user_menu_option == 2:
+                cursor.execute(f'SELECT balance FROM card WHERE number == {card_number}')
+                balance = cursor.fetchone()
+                print("Enter income:")
+                income = int(input()) + int(balance[0])
+                cursor.execute(f'UPDATE card SET balance = {income} WHERE number == {card_number} ')
+                conn.commit()
+                print("Income was added!")
+            elif user_menu_option == 3:
+                card_number_to_transfer = int(input("Transfer\nEnter card number:"))
+                cursor.execute("SELECT * FROM card")
+                exists = False
+                for value in cursor.fetchall():
+                    if card_number_to_transfer == int(value[1]):
+                        exists = True
+                        break
+                if exists:
+                    money_to_transfer = int(input("Enter how much money you want to transfer:"))
+                    cursor.execute(f'SELECT balance FROM card WHERE number == {card_number}')
+                    if money_to_transfer < cursor.fetchone()[0]:
+                        print("Success!")
+                    else:
+                        print("Not enough money")
+                else:
+                    print("Probably you made a mistake in the card number. Please try again!")
+            elif user_menu_option == 4:
+                cursor.execute(f'DELETE FROM card WHERE number == {card_number}')
+                conn.commit()
+                print("The account has been closed!")
+            elif user_menu_option == 5:
                 print('You have successfully logged out!')
                 break
             else:
                 print('Bye!')
-                return
+                sys.exit()
     else:
         print("Wrong card number or PIN!")
 
@@ -129,10 +160,10 @@ def login(card_number: int, pin_number: int, cursor):
 if __name__ == "__main__":
     cur, conn = database("card.s3db")
     while True:
-        option = int(input("1. Create an account\n2. Log into account\n3. Exit\n"))
+        option = int(input("1. Create an account\n2. Log into account\n0. Exit\n"))
         if option == 1:
             create_account(cur, conn)
         elif option == 2:
-            login(int(input("Enter your card number:\n")), int(input("Enter your PIN:\n")), cur)
-        elif option == 3:
-            break
+            login(int(input("Enter your card number:\n")), int(input("Enter your PIN:\n")), cur, conn)
+        elif option == 0:
+            sys.exit()
