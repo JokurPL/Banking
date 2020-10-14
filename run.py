@@ -122,10 +122,14 @@ def login(card_number: int, pin_number: int, cursor, conn):
                 cursor.execute(f'SELECT balance FROM card WHERE number == {card_number}')
                 balance = cursor.fetchone()
                 print("Enter income:")
-                income = int(input()) + int(balance[0])
-                cursor.execute(f'UPDATE card SET balance = {income} WHERE number == {card_number} ')
-                conn.commit()
-                print("Income was added!")
+                income_input = int(input())
+                if income_input > 0:
+                    income = income_input + int(balance[0])
+                    cursor.execute(f'UPDATE card SET balance = {income} WHERE number == {card_number} ')
+                    conn.commit()
+                    print("Income was added!")
+                else:
+                    print("Income must be greater than 0!")
             elif user_menu_option == 3:
                 card_number_to_transfer = int(input("Transfer\nEnter card number:"))
                 cursor.execute("SELECT * FROM card")
@@ -137,12 +141,46 @@ def login(card_number: int, pin_number: int, cursor, conn):
                 if exists:
                     money_to_transfer = int(input("Enter how much money you want to transfer:"))
                     cursor.execute(f'SELECT balance FROM card WHERE number == {card_number}')
-                    if money_to_transfer < cursor.fetchone()[0]:
+                    balance = cursor.fetchone()[0]
+                    if balance > money_to_transfer > 0:
+                        new_balance = balance - money_to_transfer
+                        cursor.execute(f'UPDATE card SET balance = {new_balance} WHERE number = {card_number}')
+                        conn.commit()
+
+                        cursor.execute(f'SELECT balance FROM card WHERE number == {card_number_to_transfer}')
+                        new_balance_receiver = cursor.fetchone()[0] + money_to_transfer
+                        cursor.execute(f'UPDATE card SET balance = {new_balance_receiver} WHERE number = {card_number_to_transfer}')
+                        conn.commit()
+
                         print("Success!")
                     else:
                         print("Not enough money")
                 else:
-                    print("Probably you made a mistake in the card number. Please try again!")
+                    check_card = str(card_number_to_transfer)[:15]
+                    luhn_card = ""
+                    counter = 1
+                    for number in check_card:
+                        if not counter % 2 == 0:
+                            number = int(number) * 2
+                        luhn_card += str(number)
+                        counter += 1
+
+                    luhn_card_step_two = ""
+                    for number in luhn_card:
+                        if int(number) > 9:
+                            number -= 9
+                        luhn_card_step_two += number
+
+                    amount = 0
+                    for number in luhn_card_step_two:
+                        amount += int(number)
+
+                    last_number = str(card_number_to_transfer)[:1]
+                    amount += int(last_number)
+                    if amount % 10 == 0:
+                        print("Such a card does not exist.")
+                    else:
+                        print("Probably you made a mistake in the card number. Please try again!")
             elif user_menu_option == 4:
                 cursor.execute(f'DELETE FROM card WHERE number == {card_number}')
                 conn.commit()
@@ -158,7 +196,7 @@ def login(card_number: int, pin_number: int, cursor, conn):
 
 
 if __name__ == "__main__":
-    cur, conn = database("card.s3db")
+    cur, conn = database("./card.s3db")
     while True:
         option = int(input("1. Create an account\n2. Log into account\n0. Exit\n"))
         if option == 1:
