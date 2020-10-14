@@ -3,8 +3,6 @@ import random, sqlite3, sys
 import os.path
 from os import path
 
-data = {}
-
 
 def database(db_file):
     try:
@@ -88,7 +86,6 @@ def create_account(cursor, conn):
 
     balance = 0
 
-    data.update({'card_number': elementary_card_number, 'pin_number': pin, 'balance': balance})
     cursor.execute(f'INSERT INTO card(number, pin, balance) VALUES ("{elementary_card_number}", {pin}, {balance})')
     conn.commit()
     print("Your card has been created")
